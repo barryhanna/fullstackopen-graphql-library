@@ -101,10 +101,22 @@ const typeDefs = `
 		id: String!
 	}
 
+	type Author {
+		name: String!
+		id: String!
+		born: Int!
+	}
+
+	type AuthorResult {
+		name: String!
+		bookCount: Int!
+	}
+
   type Query {
     bookCount: Int
     authorCount: Int
 	allBooks: [Book!]!
+	allAuthors: [AuthorResult!]!
   }
 `;
 
@@ -118,6 +130,24 @@ const resolvers = {
 		},
 		allBooks: () => {
 			return books;
+		},
+		allAuthors: () => {
+			return books.reduce((authorList, book) => {
+				const authorInList = authorList.findIndex(
+					(entry) => entry.name === book.author
+				);
+				console.log('Author in list:', authorInList);
+				if (authorInList >= 0) {
+					const newBookCount = authorList[authorInList].bookCount + 1;
+					authorList[authorInList] = {
+						name: book.author,
+						bookCount: newBookCount,
+					};
+				} else {
+					authorList.push({ name: book.author, bookCount: 1 });
+				}
+				return authorList;
+			}, []);
 		},
 	},
 };
