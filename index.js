@@ -128,6 +128,10 @@ const typeDefs = `
 		published: Int!
 		genres: [String!]!
 	): Book
+	editAuthor(
+		name: String!
+		setBornTo: Int!
+	): Author
   }
 `;
 
@@ -202,6 +206,24 @@ const resolvers = {
 			}
 			books = books.concat(book);
 			return book;
+		},
+		editAuthor: (root, args) => {
+			const name = args.name;
+			const birthYear = args.setBornTo;
+			const author = authors.find((author) => author.name === name);
+
+			if (!author) {
+				return {
+					editAuthor: null,
+				};
+			}
+
+			const authorIndex = authors.findIndex(
+				(author) => author.name == name
+			);
+			authors[authorIndex].born = birthYear;
+
+			return authors[authorIndex];
 		},
 	},
 };
