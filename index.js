@@ -2,6 +2,7 @@ const { ApolloServer } = require('@apollo/server');
 const {
 	startStandaloneServer,
 } = require('@apollo/server/standalone');
+const { v1: uuid } = require('uuid');
 
 let authors = [
 	{
@@ -104,12 +105,13 @@ const typeDefs = `
 	type Author {
 		name: String!
 		id: String!
-		born: Int!
+		born: Int
 	}
 
 	type AuthorResult {
 		name: String!
 		bookCount: Int!
+		born: Int
 	}
 
   type Query {
@@ -117,6 +119,15 @@ const typeDefs = `
     authorCount: Int
 	allBooks(author: String, genre: String): [Book!]!
 	allAuthors: [AuthorResult!]!
+  }
+
+  type Mutation {
+	addBook(
+		title: String!
+		author: String!
+		published: Int!
+		genres: [String!]!
+	): Book
   }
 `;
 
@@ -154,18 +165,43 @@ const resolvers = {
 				const authorInList = authorList.findIndex(
 					(entry) => entry.name === book.author
 				);
-				console.log('Author in list:', authorInList);
+
 				if (authorInList >= 0) {
 					const newBookCount = authorList[authorInList].bookCount + 1;
 					authorList[authorInList] = {
 						name: book.author,
+						born: authorList[authorInList]?.born,
 						bookCount: newBookCount,
 					};
 				} else {
-					authorList.push({ name: book.author, bookCount: 1 });
+					const authorBorn = authors.find(
+						(author) => author.name === book.author
+					)?.born;
+					authorList.push({
+						name: book.author,
+						born: authorBorn,
+						bookCount: 1,
+					});
 				}
 				return authorList;
 			}, []);
+		},
+	},
+	Mutation: {
+		addBook: (root, args) => {
+			const book = { ...args, id: uuid() };
+			const authorDoesNotExist =
+				authors.filter((author) => author.name === args.author)
+					.length === 0;
+			if (authorDoesNotExist) {
+				authors.push({
+					id: 'afa51ab0-344d-11e9-a414-719c6709cf3e',
+					name: book.author,
+					born: null,
+				});
+			}
+			books = books.concat(book);
+			return book;
 		},
 	},
 };
